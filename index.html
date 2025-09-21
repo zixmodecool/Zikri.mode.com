@@ -30,6 +30,9 @@
     .close-btn {background:crimson;color:#fff;}
     #bratCanvas {display:none;margin-top:10px;background:#fff;border-radius:8px;}
     #downloadBrat {display:none;color:#fff;text-decoration:none;font-weight:bold;}
+    @media (max-width:768px){
+      .container{max-width:95%;}
+    }
   </style>
 </head>
 <body>
@@ -101,12 +104,12 @@
     }
 
     function downloadVideo(){
-      if(!lastData){alert("❌ Masukkan link dulu!");return;}
+      if(!lastData){return;} // tidak ada alert
       quickDownload(lastData.play,(lastData.title||"tiktok_video")+".mp4");
     }
 
     function downloadMusik(){
-      if(!lastData){alert("❌ Masukkan link dulu!");return;}
+      if(!lastData){return;}
       quickDownload(lastData.music,(lastData.music_info?.title||"tiktok_music")+".mp3");
     }
 
@@ -133,7 +136,7 @@
     }
 
     async function shareVideo(){
-      if(!lastData){alert("❌ Masukkan link dulu!");return;}
+      if(!lastData){return;}
       const shareData={title:lastData.title||"Video TikTok",text:"Lihat video ini!",url:lastData.play};
       if(navigator.share){
         try{await navigator.share(shareData);showToast("✅ Berhasil dibagikan!");}
@@ -142,14 +145,14 @@
     }
 
     function makeGif(){
-      if(!lastData){alert("❌ Masukkan link dulu!");return;}
+      if(!lastData){return;}
       const videoUrl=encodeURIComponent(lastData.play);
       const gifMakerUrl=`https://ezgif.com/video-to-gif?url=${videoUrl}`;
       window.open(gifMakerUrl,"_blank");
     }
 
     function showMenu(){
-      if(!lastData){alert("❌ Masukkan link dulu!");return;}
+      if(!lastData){return;}
       document.getElementById("menuSidebar").classList.add("show");
     }
 

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Downloader versi Zikri + Brat</title>
+  <style>
+    body {margin:0;padding:0;font-family:Arial,sans-serif;color:#fff;text-align:center;overflow-x:hidden;}
+    #bg-video {position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:-1;}
+    .container {position:relative;z-index:2;background:rgba(0,0,0,0.65);padding:20px;margin:40px auto;
+      border-radius:15px;width:90%;max-width:420px;box-shadow:0 4px 15px rgba(0,0,0,0.5);}
+    h2 {color:yellow;margin-bottom:15px;}
+    input {width:100%;padding:10px;margin-bottom:15px;border:none;border-radius:10px;}
+    button {width:100%;padding:12px;margin:6px 0;border:none;border-radius:10px;font-weight:bold;cursor:pointer;font-size:15px;}
+    .download-btn {background:linear-gradient(to right,#ff0080,#7928ca);color:#fff;}
+    .toggle-btn {background:#28a745;color:#fff;}
+    #preview {margin-top:20px;background:rgba(255,255,255,0.1);border-radius:10px;padding:10px;display:none;}
+    #preview img {max-width:100%;border-radius:10px;margin-bottom:10px;}
+    #title {font-weight:bold;margin-bottom:5px;color:#ffd700;}
+    #music {font-size:14px;color:#a0e6ff;}
+
+    /* Sidebar */
+    .sidebar {
+      position:fixed;top:0;left:-260px;width:250px;height:100%;
+      background:rgba(0,0,0,0.85);color:#fff;padding:15px;box-shadow:2px 0 8px rgba(0,0,0,0.5);
+      z-index:1000;transition:left 0.3s ease;overflow-y:auto;border-right:2px solid #444;
+    }
+    .sidebar.show {left:0;}
+    .sidebar button,.sidebar input,.sidebar a {width:100%;margin:8px 0;padding:10px;border-radius:8px;border:none;font-weight:bold;cursor:pointer;}
+    .close-btn {background:crimson;color:#fff;}
+    #bratCanvas {display:none;margin-top:10px;background:#fff;border-radius:8px;}
+    #downloadBrat {display:none;color:#fff;text-decoration:none;font-weight:bold;}
+  </style>
+</head>
+<body>
+  <video autoplay muted loop id="bg-video">
+    <source src="https://files.catbox.moe/50s2e5.mp4" type="video/mp4">
+  </video>
+
+  <div class="container">
+    <h2>Downloader versi Zikri</h2>
+    <input type="text" id="link" placeholder="Tempel tautan TikTok di sini" oninput="updatePreview()">
+
+    <div id="preview">
+      <img id="thumbnail" src="" alt="Thumbnail">
+      <div id="title"></div>
+      <div id="music"></div>
+    </div>
+
+    <button class="download-btn" onclick="showMenu()">Download</button>
+    <button class="toggle-btn" onclick="toggleSuara()">ON / OFF Suara</button>
+  </div>
+
+  <!-- Sidebar Menu -->
+  <div id="menuSidebar" class="sidebar">
+    <button onclick="downloadVideo()">Download Tanpa Watermark</button>
+    <button onclick="downloadVideo()">Download Dengan Watermark</button>
+    <button onclick="downloadMusik()">Download Musik</button>
+    <button onclick="shareVideo()">Bagikan</button>
+    <button onclick="makeGif()">Buat GIF</button>
+    <hr>
+    <h3>Brat Text Generator</h3>
+    <input type="text" id="bratText" placeholder="Ketik kata-kata Brat">
+    <button onclick="buatBrat()">Buat Brat</button>
+    <canvas id="bratCanvas" width="400" height="400"></canvas>
+    <a id="downloadBrat" href="#" download="brat_teks.png">⬇ Unduh Brat</a>
+    <button class="close-btn" onclick="closeMenu()">Tutup</button>
+  </div>
+
+  <script>
+    const bgVideo=document.getElementById("bg-video");
+    let lastData=null;
+
+    async function fetchTikTokData(url){
+      if(!url) return null;
+      try {
+        const res=await fetch("https://www.tikwm.com/api/?url="+encodeURIComponent(url));
+        const data=await res.json();
+        return (data.code===0)?data.data:null;
+      } catch(e){return null;}
+    }
+
+    async function updatePreview(){
+      const url=document.getElementById("link").value.trim();
+      const preview=document.getElementById("preview");
+      if(!url){preview.style.display="none";lastData=null;return;}
+      const data=await fetchTikTokData(url);
+      if(data){
+        lastData=data;
+        document.getElementById("thumbnail").src=data.cover_hd||data.cover||data.origin_cover;
+        document.getElementById("title").innerText=data.title||"Tanpa judul";
+        document.getElementById("music").innerText=data.music_info?.title?`🎵 ${data.music_info.title} - ${data.music_info.author}`:"Tidak ada info musik";
+        preview.style.display="block";
+      } else {preview.style.display="none";lastData=null;}
+    }
+
+    function quickDownload(url,filename){
+      const a=document.createElement("a");
+      a.href=url;a.download=filename;
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+    }
+
+    function downloadVideo(){
+      if(!lastData){alert("❌ Masukkan link dulu!");return;}
+      quickDownload(lastData.play,(lastData.title||"tiktok_video")+".mp4");
+    }
+
+    function downloadMusik(){
+      if(!lastData){alert("❌ Masukkan link dulu!");return;}
+      quickDownload(lastData.music,(lastData.music_info?.title||"tiktok_music")+".mp3");
+    }
+
+    function showToast(msg){
+      let toast=document.createElement("div");
+      toast.innerText=msg;
+      toast.style.position="fixed";
+      toast.style.bottom="30px";
+      toast.style.left="50%";
+      toast.style.transform="translateX(-50%)";
+      toast.style.background="rgba(0,0,0,0.7)";
+      toast.style.color="#fff";
+      toast.style.padding="8px 16px";
+      toast.style.borderRadius="8px";
+      toast.style.fontWeight="bold";
+      toast.style.zIndex="9999";
+      document.body.appendChild(toast);
+      setTimeout(()=>toast.remove(),800);
+    }
+
+    function toggleSuara(){
+      bgVideo.muted=!bgVideo.muted;
+      showToast(bgVideo.muted?"OFF":"ON");
+    }
+
+    async function shareVideo(){
+      if(!lastData){alert("❌ Masukkan link dulu!");return;}
+      const shareData={title:lastData.title||"Video TikTok",text:"Lihat video ini!",url:lastData.play};
+      if(navigator.share){
+        try{await navigator.share(shareData);showToast("✅ Berhasil dibagikan!");}
+        catch(err){showToast("❌ Gagal berbagi");}
+      } else {navigator.clipboard.writeText(lastData.play);showToast("📋 Link disalin ke clipboard!");}
+    }
+
+    function makeGif(){
+      if(!lastData){alert("❌ Masukkan link dulu!");return;}
+      const videoUrl=encodeURIComponent(lastData.play);
+      const gifMakerUrl=`https://ezgif.com/video-to-gif?url=${videoUrl}`;
+      window.open(gifMakerUrl,"_blank");
+    }
+
+    function showMenu(){
+      if(!lastData){alert("❌ Masukkan link dulu!");return;}
+      document.getElementById("menuSidebar").classList.add("show");
+    }
+
+    function closeMenu(){
+      document.getElementById("menuSidebar").classList.remove("show");
+    }
+
+    function buatBrat(){
+      const text=document.getElementById("bratText").value.trim();
+      const canvas=document.getElementById("bratCanvas");
+      const link=document.getElementById("downloadBrat");
+      if(!text){showToast("❌ Ketik kata dulu!");return;}
+      const ctx=canvas.getContext("2d");
+      canvas.width=400;canvas.height=400;
+      ctx.fillStyle="#ffffff";ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle="#000000";ctx.font="bold 80px Arial, sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+      const words=text.split(" ");const lineHeight=100;
+      const startY=canvas.height/2-((words.length-1)/2)*lineHeight;
+      words.forEach((w,i)=>{ctx.fillText(w,canvas.width/2,startY+i*lineHeight);});
+      canvas.style.display="block";
+      link.href=canvas.toDataURL("image/png");link.style.display="block";
+    }
+  </script>
+</body>
+</html>
